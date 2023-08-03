@@ -1,0 +1,6 @@
+mysql:
+  host: 10.66.210.220
+  port: 3306
+  username: root
+  password: 123456
+  database: iwhite
