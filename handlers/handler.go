@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"iwhite/models"
 	"net/http"
@@ -18,6 +19,7 @@ func NewServerHandler(db *sql.DB) *ServerHandler {
 }
 func (h *ServerHandler) GetServerHandler(c echo.Context) error {
 	search := c.QueryParam("search")
+	fmt.Println("Database connection:", c.Get("db").(*sql.DB)) // 调试输出，检查是否获取到了数据库连接
 	servers, err := models.QueryServers(c.Get("db").(*sql.DB), search)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to query servers")

@@ -29,7 +29,7 @@ func queryServers(db *sql.DB, query string, args ...interface{}) ([]Server, erro
 	for rows.Next() {
 		var server Server
 		offlineDate := sql.NullTime{}
-		err := rows.Scan(&server.ID, &server.Hostname, &server.IPAddress, &server.Owner, &server.Status, &server.ExpirationDate, &offlineDate)
+		err := rows.Scan(&server.ID, &server.Hostname, &server.IPAddress, &server.UUID, &server.Category, &server.Owner, &server.Status, &server.ExpirationDate, &offlineDate)
 		if err != nil {
 			return nil, err
 		}
@@ -113,5 +113,6 @@ func DeleteServer(db *sql.DB, search string) error {
 func QueryServers(db *sql.DB, search string) ([]Server, error) {
 	// Implement the logic to query the servers from the database based on the search criteria here.
 	// ...
-	return nil, nil
+	query := "SELECT DISTINCT id, hostname, ip_address,uuid,category , owner, status, expiration_date, offline_date FROM servers WHERE hostname LIKE ? OR ip_address LIKE ? "
+	return queryServers(db, query, "%"+search+"%", "%"+search+"%")
 }
