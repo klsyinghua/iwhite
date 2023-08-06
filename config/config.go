@@ -22,7 +22,7 @@ func GetMySQLConfig() string {
 	password := viper.GetString("mysql.password")
 	host := viper.GetString("mysql.host")
 	port := viper.GetInt("mysql.port")
-	database := viper.GetString("mysql.models")
+	database := viper.GetString("mysql.database")
 
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", username, password, host, port, database)
 }

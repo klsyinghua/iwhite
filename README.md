@@ -17,6 +17,6 @@ CREATE TABLE servers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO servers (hostname, ip_address, owner, status,expiration_date)
-VALUES ("ITSM-0001", "192.168.1.1", "ITSM", "Running","2022-12-31");
+INSERT INTO servers (hostname, ip_address, owner, status,expiration_date,category,uuid)
+VALUES ("ITSM-0001", "192.168.1.1", "ITSM", "Running","2022-12-31","infra","12345jdlaj");
 ```

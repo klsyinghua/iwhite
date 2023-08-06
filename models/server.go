@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"log"
 	"time"
 )
 
@@ -19,8 +20,13 @@ type Server struct {
 
 // queryServers 是一个单独的数据库查询函数
 func queryServers(db *sql.DB, query string, args ...interface{}) ([]Server, error) {
+	log.Printf("Executing query: %s, args: %v", query, args)
+
 	rows, err := db.Query(query, args...)
+
 	if err != nil {
+		log.Printf("Error executing query: %v", err)
+
 		return nil, err
 	}
 	defer rows.Close()
@@ -31,6 +37,8 @@ func queryServers(db *sql.DB, query string, args ...interface{}) ([]Server, erro
 		offlineDate := sql.NullTime{}
 		err := rows.Scan(&server.ID, &server.Hostname, &server.IPAddress, &server.UUID, &server.Category, &server.Owner, &server.Status, &server.ExpirationDate, &offlineDate)
 		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+
 			return nil, err
 		}
 		if offlineDate.Valid {
@@ -38,7 +46,7 @@ func queryServers(db *sql.DB, query string, args ...interface{}) ([]Server, erro
 		}
 		servers = append(servers, server)
 	}
-
+	log.Printf("Query executed successfully, retrieved %d rows", len(servers))
 	return servers, nil
 }
 
@@ -114,5 +122,13 @@ func QueryServers(db *sql.DB, search string) ([]Server, error) {
 	// Implement the logic to query the servers from the database based on the search criteria here.
 	// ...
 	query := "SELECT DISTINCT id, hostname, ip_address,uuid,category , owner, status, expiration_date, offline_date FROM servers WHERE hostname LIKE ? OR ip_address LIKE ? "
-	return queryServers(db, query, "%"+search+"%", "%"+search+"%")
+	log.Printf("Executing query: %s, args: [%s %s]", query, "%"+search+"%", "%"+search+"%")
+
+	servers, err := queryServers(db, query, "%"+search+"%", "%"+search+"%")
+	if err != nil {
+		log.Printf("Error executing queryServers: %v", err) // 输出错误信息
+		return nil, err
+	}
+
+	return servers, nil
 }

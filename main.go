@@ -18,6 +18,11 @@ func main() {
 	}
 	e := echo.New()
 	db.InitDB(e.Logger)
+	if db.GetDB() == nil {
+		log.Fatal("Failed to initialize database connection")
+	} else {
+		log.Println("Database connection successful")
+	}
 	// 添加日志中间件
 	e.Use(middleware.Logger())
 	// 将数据库连接传递给处理函数

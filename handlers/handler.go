@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
-	"github.com/labstack/echo/v4"
 	"iwhite/models"
+	"log"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type ServerHandler struct {
@@ -19,13 +20,30 @@ func NewServerHandler(db *sql.DB) *ServerHandler {
 }
 func (h *ServerHandler) GetServerHandler(c echo.Context) error {
 	search := c.QueryParam("search")
-	fmt.Println("Database connection:", c.Get("db").(*sql.DB)) // 调试输出，检查是否获取到了数据库连接
-	servers, err := models.QueryServers(c.Get("db").(*sql.DB), search)
+	log.Printf("Querying servers with search term: %s", search)
+	// 获取数据库连接
+	dbConn := c.Get("db").(*sql.DB)
+	if dbConn == nil {
+		log.Printf("Database connection not found") // 输出日志，表示未找到数据库连接
+		return c.String(http.StatusInternalServerError, "Failed to query servers")
+	}
+	// 调用 models.QueryServers 函数查询服务器数据，并输出查询语句和查询参数的日志
+	query := "SELECT DISTINCT id, hostname, ip_address,uuid,category , owner, status, expiration_date, offline_date FROM servers WHERE hostname LIKE ? OR ip_address LIKE ? "
+	log.Printf("Executing query: %s, args: [%s %s]", query, "%"+search+"%", "%"+search+"%")
+
+	servers, err := models.QueryServers(dbConn, search)
 	if err != nil {
+		log.Printf("Error querying servers: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to query servers")
 	}
 
 	return c.JSON(http.StatusOK, servers)
+	// servers, err := models.QueryServers(c.Get("db").(*sql.DB), search)
+	// if err != nil {
+	// 	return c.String(http.StatusInternalServerError, "Failed to query servers")
+	// }
+
+	// return c.JSON(http.StatusOK, servers)
 }
 
 func (h *ServerHandler) CreateServerHandler(c echo.Context) error {
