@@ -55,28 +55,31 @@ func (h *ServerHandler) CreateServerHandler(c echo.Context) error {
 
 	existsHostname, err := server.ExistsHostname(c.Get("db").(*sql.DB))
 	if err != nil {
+		log.Printf("Error executing query: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to insert server")
 	}
 
 	existsIPAddress, err := server.ExistsIPAddress(c.Get("db").(*sql.DB))
 	if err != nil {
+		log.Printf("Error executing query: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to insert server")
 	}
 
 	if existsHostname && existsIPAddress {
-		return c.String(http.StatusConflict, "Server hostname and IP address already exist")
+		return c.String(http.StatusConflict, "Server"+server.Hostname+" and IP address already exist")
 	} else if existsHostname {
-		return c.String(http.StatusConflict, "Server hostname already exists")
+		return c.String(http.StatusConflict, server.Hostname+"Server hostname already exists")
 	} else if existsIPAddress {
 		return c.String(http.StatusConflict, "Server IP address already exists")
 	}
 
 	err = server.InsertServer(c.Get("db").(*sql.DB))
 	if err != nil {
+		log.Printf("Error executing insert query: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to insert server")
 	}
 
-	return c.String(http.StatusCreated, "Server information inserted successfully")
+	return c.String(http.StatusCreated, server.Hostname+"information inserted successfully")
 }
 
 func (h *ServerHandler) DeleteServerHandler(c echo.Context) error {
@@ -87,4 +90,8 @@ func (h *ServerHandler) DeleteServerHandler(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, "Server information deleted successfully")
+}
+
+func (h *ServerHandler) UpdateServerHandler(c echo.Context) error {
+	return nil
 }

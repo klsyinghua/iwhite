@@ -14,5 +14,6 @@ func SetupRoutes(e *echo.Echo) {
 	api.GET("/servers", serverHandler.GetServerHandler)
 	api.POST("/servers", serverHandler.CreateServerHandler)
 	api.DELETE("/servers", serverHandler.DeleteServerHandler)
+	api.PUT("/servers", serverHandler.UpdateServerHandler)
 	// 其他路由...
 }
