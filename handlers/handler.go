@@ -18,13 +18,22 @@ func NewServerHandler(db *gorm.DB) *ServerHandler {
 	}
 }
 func (h *ServerHandler) GetServerHandler(c echo.Context) error {
-	search := c.QueryParam("search")
-	servers, err := models.QueryServers(h.db, search)
+	servers, err := (&models.Server{}).QueryAllServers(h.db)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to query servers")
 	}
-
 	return c.JSON(http.StatusOK, servers)
+}
+func (h *ServerHandler) GetServerByHostnameOrIP(c echo.Context) error {
+	identifier := c.Param("identifier")
+
+	server := &models.Server{}
+	err := server.QueryServerByHostnameOrIP(h.db, identifier)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to query server")
+	}
+
+	return c.JSON(http.StatusOK, server)
 }
 
 func (h *ServerHandler) CreateServerHandler(c echo.Context) error {

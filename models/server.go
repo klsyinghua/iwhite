@@ -32,30 +32,45 @@ func QueryServers(db *gorm.DB, search string) ([]Server, error) {
 
 // CreateServer 方法用于创建新的服务器记录
 func (s *Server) CreateServer(db *gorm.DB) error {
-	query := "INSERT INTO servers (hostname, ip_address, owner, status, expiration_date, offline_date) VALUES (?, ?, ?, ?, ?, ?)"
-	result := db.Exec(query, s.Hostname, s.IPAddress, s.Owner, s.Status, s.ExpirationDate, s.OfflineDate)
+	result := db.Create(s)
 	return result.Error
 }
 
 // ExistsHostname 检查数据库中是否存在相同的主机名
 func (s *Server) ExistsHostname(db *gorm.DB) (bool, error) {
 	var count int64
-	query := "SELECT COUNT(*) FROM servers WHERE hostname = ?"
-	result := db.Raw(query, s.Hostname).Scan(&count)
+
+	result := db.Model(s).Where("hostname = ?", s.Hostname).Count(&count)
 	return count > 0, result.Error
 }
 
 // ExistsIPAddress checks if a server with the given IP address already exists in the database.
 func (s *Server) ExistsIPAddress(db *gorm.DB) (bool, error) {
 	var count int64
-	query := "SELECT COUNT(*) FROM servers WHERE ip_address = ?"
-	result := db.Raw(query, s.IPAddress).Scan(&count)
+	result := db.Model(s).Where("ip_address = ?", s.IPAddress).Count(&count)
 	return count > 0, result.Error
 }
 
 // DeleteServer 方法用于删除服务器记录
-func (s *Server) DeleteServer(db *gorm.DB, search string) error {
-	query := "DELETE FROM servers WHERE hostname LIKE ? OR ip_address LIKE ?"
-	result := db.Exec(query, "%"+search+"%", "%"+search+"%")
+func (s *Server) DeleteServer(db *gorm.DB, identifier string) error {
+	query := "hostname LIKE ? OR ip_address LIKE ?"
+	result := db.Where(query, "%"+identifier+"%", "%"+identifier+"%").Delete(&Server{})
 	return result.Error
+}
+
+// QueryAllServers 获取所有服务器的信息列表
+func (s *Server) QueryAllServers(db *gorm.DB) ([]Server, error) {
+	var servers []Server
+	result := db.Find(&servers).Limit(10)
+	if result.Error != nil {
+		log.Printf("Error querying all servers: %v", result.Error)
+		return nil, result.Error
+	}
+	return servers, nil
+}
+
+func (s *Server) QueryServerByHostnameOrIP(db *gorm.DB, identifier string) error {
+	query := "hostname LIKE ? OR ip_address LIKE ?"
+	err := db.Where(query, "%"+identifier+"%", "%"+identifier+"%").First(s).Error
+	return err
 }
