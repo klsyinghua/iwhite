@@ -1,49 +1,30 @@
 package handlers
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
 	"iwhite/models"
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 type ServerHandler struct {
-	//db *sql.DB
+	db *gorm.DB
 }
 
-// NewServerHandler 创建一个新的 ServerHandler 实例
-func NewServerHandler(db *sql.DB) *ServerHandler {
-	return &ServerHandler{}
-
+func NewServerHandler(db *gorm.DB) *ServerHandler {
+	return &ServerHandler{
+		db: db,
+	}
 }
 func (h *ServerHandler) GetServerHandler(c echo.Context) error {
 	search := c.QueryParam("search")
-	log.Printf("Querying servers with search term: %s", search)
-	// 获取数据库连接
-	dbConn := c.Get("db").(*sql.DB)
-	if dbConn == nil {
-		log.Printf("Database connection not found") // 输出日志，表示未找到数据库连接
-		return c.String(http.StatusInternalServerError, "Failed to query servers")
-	}
-	// 调用 models.QueryServers 函数查询服务器数据，并输出查询语句和查询参数的日志
-	query := "SELECT DISTINCT id, hostname, ip_address,uuid,category , owner, status, expiration_date, offline_date FROM servers WHERE hostname LIKE ? OR ip_address LIKE ? "
-	log.Printf("Executing query: %s, args: [%s %s]", query, "%"+search+"%", "%"+search+"%")
-
-	servers, err := models.QueryServers(dbConn, search)
+	servers, err := models.QueryServers(h.db, search)
 	if err != nil {
-		log.Printf("Error querying servers: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to query servers")
 	}
 
 	return c.JSON(http.StatusOK, servers)
-	// servers, err := models.QueryServers(c.Get("db").(*sql.DB), search)
-	// if err != nil {
-	// 	return c.String(http.StatusInternalServerError, "Failed to query servers")
-	// }
-
-	// return c.JSON(http.StatusOK, servers)
 }
 
 func (h *ServerHandler) CreateServerHandler(c echo.Context) error {
@@ -53,38 +34,36 @@ func (h *ServerHandler) CreateServerHandler(c echo.Context) error {
 		return err
 	}
 
-	existsHostname, err := server.ExistsHostname(c.Get("db").(*sql.DB))
+	existsHostname, err := server.ExistsHostname(h.db)
 	if err != nil {
-		log.Printf("Error executing query: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to insert server")
 	}
 
-	existsIPAddress, err := server.ExistsIPAddress(c.Get("db").(*sql.DB))
+	existsIPAddress, err := server.ExistsIPAddress(h.db)
 	if err != nil {
-		log.Printf("Error executing query: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to insert server")
 	}
 
 	if existsHostname && existsIPAddress {
-		return c.String(http.StatusConflict, "Server"+server.Hostname+" and IP address already exist")
+		return c.String(http.StatusConflict, "Server "+server.Hostname+" and IP address already exist")
 	} else if existsHostname {
-		return c.String(http.StatusConflict, server.Hostname+"Server hostname already exists")
+		return c.String(http.StatusConflict, "Server hostname already exists")
 	} else if existsIPAddress {
 		return c.String(http.StatusConflict, "Server IP address already exists")
 	}
 
-	err = server.InsertServer(c.Get("db").(*sql.DB))
+	err = server.CreateServer(h.db)
 	if err != nil {
-		log.Printf("Error executing insert query: %v", err)
 		return c.String(http.StatusInternalServerError, "Failed to insert server")
 	}
 
-	return c.String(http.StatusCreated, server.Hostname+"information inserted successfully")
+	return c.String(http.StatusCreated, "Server information inserted successfully")
 }
-
 func (h *ServerHandler) DeleteServerHandler(c echo.Context) error {
 	search := c.QueryParam("search")
-	err := models.DeleteServer(c.Get("db").(*sql.DB), search)
+
+	server := &models.Server{}
+	err := server.DeleteServer(h.db, search)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to delete server")
 	}
@@ -93,5 +72,29 @@ func (h *ServerHandler) DeleteServerHandler(c echo.Context) error {
 }
 
 func (h *ServerHandler) UpdateServerHandler(c echo.Context) error {
-	return nil
+	serverID := c.Param("id") // Assuming you can extract the server ID from the URL
+
+	// Get the existing server data from the database using the server ID
+	existingServer := &models.Server{}
+	if err := h.db.First(existingServer, serverID).Error; err != nil {
+		return c.String(http.StatusNotFound, "Server not found")
+	}
+
+	// Instantiate a Server struct with updated data
+	updatedServer := new(models.Server)
+	if err := c.Bind(updatedServer); err != nil {
+		return err
+	}
+
+	// Update the fields of the existing server with fields from updatedServer
+	existingServer.Hostname = updatedServer.Hostname
+	existingServer.IPAddress = updatedServer.IPAddress
+	// ... Update other fields as needed ...
+
+	// Save the updated server data back to the database
+	if err := h.db.Save(existingServer).Error; err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to update server")
+	}
+
+	return c.String(http.StatusOK, "Server information updated successfully")
 }

@@ -1,45 +1,31 @@
 package db
 
 import (
-	"database/sql"
+	"gorm.io/driver/mysql"
 	"iwhite/config"
 
 	"github.com/labstack/echo/v4"
 
-	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/gorm"
 )
 
-var db *sql.DB
+var db *gorm.DB
 
 func InitDB(logger echo.Logger) {
 	configPath := "config.yaml" // Replace with the path to your configuration file
 	if err := config.LoadConfig(configPath); err != nil {
 		logger.Fatalf("Failed to load config file: %v", err)
-
 	}
-
 	connStr := config.GetMySQLConfig()
 	var err error
-	db, err = sql.Open("mysql", connStr)
+	db, err = gorm.Open(mysql.Open(connStr), &gorm.Config{})
 	if err != nil {
 		logger.Fatalf("Failed to connect to the models: %v", err)
 	}
-
-	err = db.Ping()
-	if err != nil {
-		logger.Fatalf("Failed to ping the models: %v", err)
-	}
-	// _, err = db.Exec("SELECT * from servers")
-	// if err != nil {
-	// 	logger.Fatalf("Failed to execute test query: %v", err)
-	// }
-	// _, err = db.Exec("USE iwhite")
-	// if err != nil {
-	// 	logger.Fatalf("Failed to select database: %v", err)
-	// }
+	return
 }
 
 // GetDB returns the models connection.
-func GetDB() *sql.DB {
+func GetDB() *gorm.DB {
 	return db
 }

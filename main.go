@@ -23,18 +23,12 @@ func main() {
 	} else {
 		log.Println("Database connection successful")
 	}
+	database := db.GetDB()
 	// 添加日志中间件
 	e.Use(middleware.Logger())
-	// 将数据库连接传递给处理函数
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Set("db", db.GetDB())
-			return next(c)
-		}
-	})
 
 	// 设置路由
-	routes.SetupRoutes(e)
+	routes.SetupRoutes(e, database)
 	// 启动服务器并监听端口
 	log.Fatal(e.Start(":8080"))
 }

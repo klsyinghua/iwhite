@@ -1,7 +1,7 @@
 package models
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
 	"log"
 	"time"
 )
@@ -18,117 +18,44 @@ type Server struct {
 	OfflineDate    *time.Time `json:"offline_date"` // 使用指针指向时间类型
 }
 
-// queryServers 是一个单独的数据库查询函数
-func queryServers(db *sql.DB, query string, args ...interface{}) ([]Server, error) {
-	log.Printf("Executing query: %s, args: %v", query, args)
-
-	rows, err := db.Query(query, args...)
-
-	if err != nil {
-		log.Printf("Error executing query: %v", err)
-
+// QueryServers 方法用于查询服务器数据
+func QueryServers(db *gorm.DB, search string) ([]Server, error) {
+	var servers []Server
+	query := "hostname LIKE ? OR ip_address LIKE ?"
+	if err := db.Where(query, "%"+search+"%", "%"+search+"%").Find(&servers).Error; err != nil {
+		log.Printf("Error querying servers: %v", err)
 		return nil, err
 	}
-	defer rows.Close()
 
-	var servers []Server
-	for rows.Next() {
-		var server Server
-		offlineDate := sql.NullTime{}
-		err := rows.Scan(&server.ID, &server.Hostname, &server.IPAddress, &server.UUID, &server.Category, &server.Owner, &server.Status, &server.ExpirationDate, &offlineDate)
-		if err != nil {
-			log.Printf("Error scanning row: %v", err)
-
-			return nil, err
-		}
-		if offlineDate.Valid {
-			server.OfflineDate = &offlineDate.Time
-		}
-		servers = append(servers, server)
-	}
-	log.Printf("Query executed successfully, retrieved %d rows", len(servers))
 	return servers, nil
-}
-
-// GetServer 方法用于基于IP地址或主机名进行模糊搜索
-func (s *Server) GetServer(db *sql.DB, search string) ([]Server, error) {
-	query := "SELECT DISTINCT id, hostname, ip_address, owner, status, expiration_date, offline_date FROM servers WHERE hostname LIKE ? OR ip_address LIKE ?"
-	return queryServers(db, query, "%"+search+"%", "%"+search+"%")
 }
 
 // CreateServer 方法用于创建新的服务器记录
-func (s *Server) CreateServer(db *sql.DB, server *Server) error {
+func (s *Server) CreateServer(db *gorm.DB) error {
 	query := "INSERT INTO servers (hostname, ip_address, owner, status, expiration_date, offline_date) VALUES (?, ?, ?, ?, ?, ?)"
-	_, err := db.Exec(query, server.Hostname, server.IPAddress, server.Owner, server.Status, server.ExpirationDate, server.OfflineDate)
-	return err
-}
-
-// DeleteServer 方法用于删除服务器记录
-func (s *Server) DeleteServer(db *sql.DB, search string) error {
-	query := "DELETE FROM servers WHERE hostname LIKE ? OR ip_address LIKE ?"
-	_, err := db.Exec(query, "%"+search+"%", "%"+search+"%")
-	return err
-}
-
-// InsertServer 将当前 Server 对象的信息插入数据库
-func (s *Server) InsertServer(db *sql.DB) error {
-	stmt, err := db.Prepare("INSERT INTO servers (hostname, ip_address, owner, status, expiration_date, offline_date) VALUES (?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(s.Hostname, s.IPAddress, s.Owner, s.Status, s.ExpirationDate, s.OfflineDate)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	result := db.Exec(query, s.Hostname, s.IPAddress, s.Owner, s.Status, s.ExpirationDate, s.OfflineDate)
+	return result.Error
 }
 
 // ExistsHostname 检查数据库中是否存在相同的主机名
-func (s *Server) ExistsHostname(db *sql.DB) (bool, error) {
+func (s *Server) ExistsHostname(db *gorm.DB) (bool, error) {
+	var count int64
 	query := "SELECT COUNT(*) FROM servers WHERE hostname = ?"
-	var count int
-	err := db.QueryRow(query, s.Hostname).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
+	result := db.Raw(query, s.Hostname).Scan(&count)
+	return count > 0, result.Error
 }
 
 // ExistsIPAddress checks if a server with the given IP address already exists in the database.
-func (s *Server) ExistsIPAddress(db *sql.DB) (bool, error) {
-	// Implement the logic to check if a server with the given IP address exists in the database here.
+func (s *Server) ExistsIPAddress(db *gorm.DB) (bool, error) {
+	var count int64
 	query := "SELECT COUNT(*) FROM servers WHERE ip_address = ?"
-	var count int
-	err := db.QueryRow(query, s.IPAddress).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
+	result := db.Raw(query, s.IPAddress).Scan(&count)
+	return count > 0, result.Error
 }
 
-// DeleteServer deletes the server record from the database based on the given search criteria (hostname or IP address).
-func DeleteServer(db *sql.DB, search string) error {
-	// Implement the logic to delete the server record from the database based on the search criteria here.
-	// ...
-	return nil
-}
-
-// QueryServers retrieves a list of servers from the database based on the given search criteria (hostname or IP address).
-func QueryServers(db *sql.DB, search string) ([]Server, error) {
-	// Implement the logic to query the servers from the database based on the search criteria here.
-	// ...
-	query := "SELECT DISTINCT id, hostname, ip_address,uuid,category , owner, status, expiration_date, offline_date FROM servers WHERE hostname LIKE ? OR ip_address LIKE ? "
-	log.Printf("Executing query: %s, args: [%s %s]", query, "%"+search+"%", "%"+search+"%")
-
-	servers, err := queryServers(db, query, "%"+search+"%", "%"+search+"%")
-	if err != nil {
-		log.Printf("Error executing queryServers: %v", err) // 输出错误信息
-		return nil, err
-	}
-
-	return servers, nil
+// DeleteServer 方法用于删除服务器记录
+func (s *Server) DeleteServer(db *gorm.DB, search string) error {
+	query := "DELETE FROM servers WHERE hostname LIKE ? OR ip_address LIKE ?"
+	result := db.Exec(query, "%"+search+"%", "%"+search+"%")
+	return result.Error
 }
