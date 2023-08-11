@@ -1,11 +1,19 @@
 package handlers
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 	"iwhite/models"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+)
+
+var (
+	serverCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "servers_total",
+		Help: "Total number of servers",
+	})
 )
 
 type ServerHandler struct {
@@ -106,4 +114,17 @@ func (h *ServerHandler) UpdateServerHandler(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, "Server information updated successfully")
+}
+
+func (h *ServerHandler) GetServerMetrics(c echo.Context) error {
+	// 获取服务器信息
+	servers, err := (&models.Server{}).QueryAllServers(h.db)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to query servers")
+	}
+
+	// 设置 Prometheus 指标值
+	serverCount.Set(float64(len(servers)))
+
+	return c.JSON(http.StatusOK, servers)
 }

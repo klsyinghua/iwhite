@@ -11,7 +11,7 @@ import (
 
 var db *gorm.DB
 
-func InitDB(logger echo.Logger) {
+func InitializeDatabase(logger echo.Logger) {
 	configPath := "config.yaml" // Replace with the path to your configuration file
 	if err := config.LoadConfig(configPath); err != nil {
 		logger.Fatalf("Failed to load config file: %v", err)

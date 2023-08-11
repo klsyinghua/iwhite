@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"log"
+
 	"iwhite/config"
 	"iwhite/db"
 	"iwhite/routes"
-	"log"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -17,13 +17,14 @@ func main() {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
 	e := echo.New()
-	db.InitDB(e.Logger)
+	db.InitializeDatabase(e.Logger)
 	if db.GetDB() == nil {
 		log.Fatal("Failed to initialize database connection")
 	} else {
 		log.Println("Database connection successful")
 	}
 	database := db.GetDB()
+
 	// 添加日志中间件
 	e.Use(middleware.Logger())
 
