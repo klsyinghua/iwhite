@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gorm.io/gorm"
 	"iwhite/handlers"
 )
@@ -22,5 +23,6 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	api.POST("/annotations", serverHandler.AnnotationsHandler)
 	api.GET("/", serverHandler.HelloHandler)
 	//
-	api.GET("/metrics", serverHandler.GetServerMetrics)
+	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+	api.POST("/updatestatus", serverHandler.GetServerMetricsHandler)
 }

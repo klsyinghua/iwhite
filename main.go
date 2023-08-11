@@ -3,11 +3,13 @@ package main
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"log"
-
 	"iwhite/config"
 	"iwhite/db"
+	"iwhite/handlers"
+	"iwhite/models"
 	"iwhite/routes"
+	"log"
+	"time"
 )
 
 func main() {
@@ -30,6 +32,21 @@ func main() {
 
 	// 设置路由
 	routes.SetupRoutes(e, database)
-	// 启动服务器并监听端口
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				servers, err := (&models.Server{}).QueryAllServers(database)
+				if err != nil {
+					log.Println("Failed to query servers:", err)
+					continue
+				}
+				handlers.UpdateMetricsForServers(database, servers)
+			}
+		}
+	}()
 	log.Fatal(e.Start(":8080"))
 }

@@ -116,15 +116,46 @@ func (h *ServerHandler) UpdateServerHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Server information updated successfully")
 }
 
-func (h *ServerHandler) GetServerMetrics(c echo.Context) error {
-	// 获取服务器信息
+var serverStatus *prometheus.GaugeVec
+
+func init() {
+	serverStatus = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "server_status",
+			Help: "Server status (0: offline, 1: online)",
+		},
+		[]string{"hostname", "ip_address", "uuid", "category", "owner"},
+	)
+	prometheus.MustRegister(serverStatus)
+
+}
+func UpdateMetricsForServers(database *gorm.DB, servers []models.Server) {
+	for _, server := range servers {
+		statusValue := 0.0
+		if server.Status == "Running" {
+			statusValue = 1.0
+		}
+		labels := prometheus.Labels{
+			"hostname":   server.Hostname,
+			"ip_address": server.IPAddress,
+			"uuid":       server.UUID,
+			"category":   server.Category,
+			"owner":      server.Owner,
+		}
+		serverStatus.With(labels).Set(statusValue)
+	}
+
+	// 设置 Prometheus 的 serverCount 指标
+	serverCount.Set(float64(len(servers)))
+}
+
+func (h *ServerHandler) GetServerMetricsHandler(c echo.Context) error {
 	servers, err := (&models.Server{}).QueryAllServers(h.db)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to query servers")
 	}
 
-	// 设置 Prometheus 指标值
-	serverCount.Set(float64(len(servers)))
+	UpdateMetricsForServers(h.db, servers)
 
-	return c.JSON(http.StatusOK, servers)
+	return c.JSON(http.StatusOK, echo.Map{"message": "Server metrics updated"})
 }
