@@ -11,6 +11,8 @@ import (
 func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	serverHandler := handlers.NewServerHandler(db) // 路由组示例
 	api := e.Group("/api")
+	metrics := e.Group("/metrics")
+
 	// 用户相关路由
 	api.GET("/servers", serverHandler.GetServerHandler)
 	api.GET("/servers/:identifier", serverHandler.GetServerByHostnameOrIP)
@@ -18,11 +20,11 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	api.DELETE("/servers", serverHandler.DeleteServerHandler)
 	api.PUT("/servers", serverHandler.UpdateServerHandler)
 	// 其他路由...
-	api.GET("/search", serverHandler.SearchHandler)
-	api.POST("/query", serverHandler.QueryHandler)
-	api.POST("/annotations", serverHandler.AnnotationsHandler)
-	api.GET("/", serverHandler.HelloHandler)
+	//api.GET("/search", serverHandler.SearchHandler)
+	//api.POST("/query", serverHandler.QueryHandler)
+	//api.POST("/annotations", serverHandler.AnnotationsHandler)
+	//api.GET("/", serverHandler.HelloHandler)
 	//
-	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
-	api.POST("/updatestatus", serverHandler.GetServerMetricsHandler)
+	metrics.GET("/server", echo.WrapHandler(promhttp.Handler()))
+	metrics.POST("/sever/updatestatus", serverHandler.GetServerMetricsHandler)
 }

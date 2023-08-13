@@ -1,15 +1,16 @@
 package main
 
 import (
+	"log"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
 	"iwhite/config"
 	"iwhite/db"
-	"iwhite/handlers"
 	"iwhite/models"
 	"iwhite/routes"
-	"log"
-	"time"
+	"iwhite/scheduler"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 	if err := config.LoadConfig(configPath); err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
+
 	e := echo.New()
 	db.InitializeDatabase(e.Logger)
 	if db.GetDB() == nil {
@@ -25,28 +27,19 @@ func main() {
 	} else {
 		log.Println("Database connection successful")
 	}
+
 	database := db.GetDB()
+	err := database.AutoMigrate(&models.Server{})
+	if err != nil {
+		log.Fatalf("Failed to auto migrate: %v", err)
+	}
 
 	// 添加日志中间件
 	e.Use(middleware.Logger())
 
 	// 设置路由
 	routes.SetupRoutes(e, database)
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ticker.C:
-				servers, err := (&models.Server{}).QueryAllServers(database)
-				if err != nil {
-					log.Println("Failed to query servers:", err)
-					continue
-				}
-				handlers.UpdateMetricsForServers(database, servers)
-			}
-		}
-	}()
+	// 启动定时更新指标的调度器
+	scheduler.StartScheduler(database)
 	log.Fatal(e.Start(":8080"))
 }

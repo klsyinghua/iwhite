@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"github.com/labstack/gommon/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 	"iwhite/models"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -62,7 +64,7 @@ func (h *ServerHandler) CreateServerHandler(c echo.Context) error {
 	}
 
 	if existsHostname && existsIPAddress {
-		return c.String(http.StatusConflict, "Server "+server.Hostname+" and IP address already exist")
+		return c.String(http.StatusConflict, "Server "+server.HostName+" and IP address already exist")
 	} else if existsHostname {
 		return c.String(http.StatusConflict, "Server hostname already exists")
 	} else if existsIPAddress {
@@ -104,8 +106,8 @@ func (h *ServerHandler) UpdateServerHandler(c echo.Context) error {
 	}
 
 	// Update the fields of the existing server with fields from updatedServer
-	existingServer.Hostname = updatedServer.Hostname
-	existingServer.IPAddress = updatedServer.IPAddress
+	existingServer.HostName = updatedServer.HostName
+	existingServer.IPv4Address = updatedServer.IPv4Address
 	// ... Update other fields as needed ...
 
 	// Save the updated server data back to the database
@@ -124,24 +126,34 @@ func init() {
 			Name: "server_status",
 			Help: "Server status (0: offline, 1: online)",
 		},
-		[]string{"hostname", "ip_address", "uuid", "category", "owner"},
+		[]string{"uuid", "name", "hostname", "ipv4_address", "host_status", "create_date", "update_date", "terminate_date", "env", "owner", "features"},
 	)
 	prometheus.MustRegister(serverStatus)
 
 }
 func UpdateMetricsForServers(database *gorm.DB, servers []models.Server) {
 	for _, server := range servers {
+		log.Printf("Processing server: %s", server.Name)
 		statusValue := 0.0
-		if server.Status == "Running" {
+		if server.HostStatus == "ACTIVE" {
 			statusValue = 1.0
 		}
+		// 将时间转换为东8区时间
+		loc, _ := time.LoadLocation("Asia/Shanghai") // 或者 "Asia/Chongqing"
 		labels := prometheus.Labels{
-			"hostname":   server.Hostname,
-			"ip_address": server.IPAddress,
-			"uuid":       server.UUID,
-			"category":   server.Category,
-			"owner":      server.Owner,
+			"uuid":           server.ID,
+			"name":           server.Name,
+			"hostname":       server.HostName,
+			"ipv4_address":   server.IPv4Address,
+			"host_status":    server.HostStatus,
+			"create_date":    server.CreatedAt.In(loc).Format("2006-01-02 15:04:05"),
+			"update_date":    server.UpdatedAt.In(loc).Format("2006-01-02 15:04:05"),
+			"terminate_date": server.TerminateAt.In(loc).Format("2006-01-02 15:04:05"),
+			"env":            server.Environment,
+			"owner":          server.Owner,
+			"features":       server.Features,
 		}
+		log.Printf("Setting labels: %+v", labels)
 		serverStatus.With(labels).Set(statusValue)
 	}
 
@@ -151,6 +163,7 @@ func UpdateMetricsForServers(database *gorm.DB, servers []models.Server) {
 
 func (h *ServerHandler) GetServerMetricsHandler(c echo.Context) error {
 	servers, err := (&models.Server{}).QueryAllServers(h.db)
+
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to query servers")
 	}

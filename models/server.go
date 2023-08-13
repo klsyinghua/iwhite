@@ -7,15 +7,22 @@ import (
 )
 
 type Server struct {
-	ID             int        `json:"id"`
-	Hostname       string     `json:"hostname"`
-	IPAddress      string     `json:"ip_address"`
-	UUID           string     `json:"uuid"`
-	Category       string     `json:"category"`
-	Owner          string     `json:"owner"`
-	Status         string     `json:"status"`
-	ExpirationDate string     `json:"expiration_date"`
-	OfflineDate    *time.Time `json:"offline_date"` // 使用指针指向时间类型
+	ID          string    `gorm:"type:char(36);primaryKey"`
+	Name        string    `gorm:"type:varchar(255)"`
+	VCPUs       int       `gorm:"type:int"`
+	RAM         int       `gorm:"type:int"`
+	Disk        int       `gorm:"type:int"`
+	IPv4Address string    `gorm:"type:varchar(255)"`
+	IPv6Address string    `gorm:"type:varchar(255)"`
+	CreatedAt   time.Time `gorm:"type:timestamp"` //
+	UpdatedAt   time.Time `gorm:"type:timestamp"` //
+	TerminateAt time.Time `gorm:"type:timestamp"` // 自动销毁时间
+	PowerState  int       `gorm:"type:int"`
+	HostName    string    `gorm:"type:varchar(255)"`
+	HostStatus  string    `gorm:"type:varchar(255)"` //
+	Owner       string    `gorm:"type:varchar(255)"` // 添加拥有者字段
+	Environment string    `gorm:"type:varchar(255)"` // 所属环境字段
+	Features    string    `gorm:"type:varchar(255)"` //
 }
 
 // QueryServers 方法用于查询服务器数据
@@ -40,14 +47,14 @@ func (s *Server) CreateServer(db *gorm.DB) error {
 func (s *Server) ExistsHostname(db *gorm.DB) (bool, error) {
 	var count int64
 
-	result := db.Model(s).Where("hostname = ?", s.Hostname).Count(&count)
+	result := db.Model(s).Where("hostname = ?", s.HostName).Count(&count)
 	return count > 0, result.Error
 }
 
 // ExistsIPAddress checks if a server with the given IP address already exists in the database.
 func (s *Server) ExistsIPAddress(db *gorm.DB) (bool, error) {
 	var count int64
-	result := db.Model(s).Where("ip_address = ?", s.IPAddress).Count(&count)
+	result := db.Model(s).Where("ip_address = ?", s.IPv4Address).Count(&count)
 	return count > 0, result.Error
 }
 
@@ -61,7 +68,7 @@ func (s *Server) DeleteServer(db *gorm.DB, identifier string) error {
 // QueryAllServers 获取所有服务器的信息列表
 func (s *Server) QueryAllServers(db *gorm.DB) ([]Server, error) {
 	var servers []Server
-	result := db.Find(&servers).Limit(10)
+	result := db.Find(&servers)
 	if result.Error != nil {
 		log.Printf("Error querying all servers: %v", result.Error)
 		return nil, result.Error
