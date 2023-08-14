@@ -1,3 +1,5 @@
+app_env: "dev"
+
 dev:
   mysql:
     username: root

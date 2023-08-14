@@ -34,8 +34,13 @@ func (c *AppConfig) InitConfig(filePath string) error {
 	}
 	return nil
 }
+func (c *AppConfig) GetEnvConfig() string {
+
+	return viper.GetString("app_env")
+}
 
 func (c *AppConfig) GetMySQLConfig(env string) MySQLConfig {
+
 	return MySQLConfig{
 		Username: viper.GetString(env + ".mysql.username"),
 		Password: viper.GetString(env + ".mysql.password"),
@@ -45,12 +50,13 @@ func (c *AppConfig) GetMySQLConfig(env string) MySQLConfig {
 	}
 }
 
-func (c *AppConfig) GetConnectionString(env string) string {
+func (c *AppConfig) GetMysqlConnectionString(env string) string {
 	config := c.GetMySQLConfig(env)
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		config.Username, config.Password, config.Host, config.Port, config.Database)
 }
 
+// todo
 func (c *AppConfig) SchedulerConfig(env string) MySQLConfig {
 	return MySQLConfig{
 		Username: viper.GetString(env + ".mysql.username"),
@@ -61,7 +67,6 @@ func (c *AppConfig) SchedulerConfig(env string) MySQLConfig {
 	}
 }
 
-// todo
 func (c *AppConfig) GetSchedulerConfig(env string) string {
 	return ""
 }

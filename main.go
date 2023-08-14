@@ -27,13 +27,7 @@ func main() {
 		fmt.Printf("Failed to load config file: %v\n", err)
 		return
 	}
-
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		env = "dev"
-	}
-
-	connectionString := appConfig.GetConnectionString(env)
+	connectionString := appConfig.GetMysqlConnectionString(appConfig.GetEnvConfig())
 	e := echo.New()
 	dbInstance.Initialize(connectionString, e.Logger)
 	database := dbInstance.GetConnection()
