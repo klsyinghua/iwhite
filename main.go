@@ -20,9 +20,7 @@ func main() {
 	//var configPath string
 	configPath := flag.String("c", "", "Path to the configuration file")
 	flag.Parse()
-	//if len(os.Args) > 1 {
-	//	configPath = os.Args[1] // 获取命令行参数作为配置文件路径
-	//}
+
 	if err := appConfig.InitConfig(*configPath); err != nil {
 		fmt.Printf("Failed to load config file: %v\n", err)
 		return
