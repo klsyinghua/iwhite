@@ -1,14 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"iwhite/config"
 	"iwhite/scheduler"
 	"log"
-	"os"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 
 	"iwhite/db"
 	"iwhite/routes"
@@ -18,12 +17,13 @@ func main() {
 	// Initialize configuration
 	var appConfig config.AppConfig
 	var dbInstance db.Database
-	var configPath string
-
-	if len(os.Args) > 1 {
-		configPath = os.Args[1] // 获取命令行参数作为配置文件路径
-	}
-	if err := appConfig.InitConfig(configPath); err != nil {
+	//var configPath string
+	configPath := flag.String("c", "", "Path to the configuration file")
+	flag.Parse()
+	//if len(os.Args) > 1 {
+	//	configPath = os.Args[1] // 获取命令行参数作为配置文件路径
+	//}
+	if err := appConfig.InitConfig(*configPath); err != nil {
 		fmt.Printf("Failed to load config file: %v\n", err)
 		return
 	}

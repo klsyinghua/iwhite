@@ -1,4 +1,4 @@
-app_env: "dev"
+app_env: "uat"
 
 dev:
   mysql:
@@ -7,6 +7,14 @@ dev:
     host: 10.66.210.220
     port: 3306
     database: iwhite
+uat:
+  mysql:
+    username: root
+    password: 123456
+    host: 10.66.210.220
+    port: 3306
+    database: iwhite
+
 
 prod:
   mysql:
