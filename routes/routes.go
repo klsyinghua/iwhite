@@ -14,11 +14,12 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	metrics := e.Group("/metrics")
 
 	// 用户相关路由
-	api.GET("/servers", serverHandler.GetServerHandler)
-	api.GET("/servers/:identifier", serverHandler.GetServerByHostnameOrIP)
+	api.GET("/servers", serverHandler.GetServersHandler)
+
+	api.GET("/servers/:id", serverHandler.GetServerHandler)
 	api.POST("/servers", serverHandler.CreateServerHandler)
-	api.DELETE("/servers", serverHandler.DeleteServerHandler)
-	api.PUT("/servers", serverHandler.UpdateServerHandler)
+	api.DELETE("/servers/:id", serverHandler.DeleteServerHandler)
+	api.PUT("/servers/:id", serverHandler.UpdateServerHandler)
 	// 其他路由...
 	//api.GET("/search", serverHandler.SearchHandler)
 	//api.POST("/query", serverHandler.QueryHandler)

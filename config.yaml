@@ -1,6 +1,15 @@
-mysql:
-  host: 127.0.0.1
-  port: 3306
-  username: root
-  password: password
-  database: iwhite
+dev:
+  mysql:
+    username: root
+    password: 123456
+    host: 10.66.210.220
+    port: 3306
+    database: iwhite
+
+prod:
+  mysql:
+    username: prod_user
+    password: prod_password
+    host: db.example.com
+    port: 3306
+    database: prod_db

@@ -8,7 +8,7 @@ import (
 
 func (h *ServerHandler) SearchHandler(c echo.Context) error {
 	// Implement search logic and return suggestions
-	suggestions, err := (&models.Server{}).QueryAllServers(h.db)
+	suggestions, err := (&models.Server{}).GetAllServers(h.db)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to query servers")
 	}
@@ -19,7 +19,7 @@ func (h *ServerHandler) SearchHandler(c echo.Context) error {
 func (h *ServerHandler) QueryHandler(c echo.Context) error {
 	identifier := c.Param("identifier")
 	responseData := &models.Server{}
-	err := responseData.QueryServerByHostnameOrIP(h.db, identifier)
+	err := responseData.GetServer(h.db, identifier)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to query server")
 	}

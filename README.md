@@ -64,13 +64,36 @@ podman run -d -p 3000:3000 --name=granfa --network=host docker.io/grafana/grafan
 ```sql
 INSERT INTO servers (id, name, v_cpus, ram, disk, ipv4_address, ipv6_address, created_at, updated_at, terminate_at, power_state, host_name, host_status, owner, environment, features)
 VALUES
-    ('9f819649-1f7c-44ea-a315-7aa6706de50b', 'ecs-test01', 4, 4096, 0, '192.168.0.116', '', '2023-08-12 15:00:00', '2023-08-12 15:00:00', '2023-08-12 18:00:00', 1, 'instance-000ffcfa', 'ACTIVE', 'John Doe', 'Production', 'Feature1,Feature2'),
-    ('d6c4f518-28c1-43a2-8d24-8cb66b335320', 'ecs-test02', 8, 8192, 100, '192.168.0.117', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd12', 'ACTIVE', 'Jane Smith', 'Development', 'Feature2,Feature3'),
-    ('d6c4f518-28c1-43a2-8d24-8cb66b335322', 'ecs-test03', 8, 8192, 100, '192.168.0.117', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd12', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3'),
-    ('d6c4f518-28c1-43a2-8d24-8cb66b335323', 'ecs-test05', 8, 8192, 100, '192.168.0.112', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd13', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3'),
-    ('d6c4f518-28c1-43a2-8d24-8cb66b335324', 'ecs-test06', 8, 8192, 100, '192.168.0.110', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd14', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3'),
-    ('d6c4f518-28c1-43a2-8d24-8cb66b335325', 'ecs-test03', 8, 8192, 100, '192.168.0.119', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd15', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3'),
+    ('9f819649-1f7c-44ea-a315-7aa6706de50b', 'ecs-test01', 4, 4096, 0, '192.168.0.116', '', '2023-08-12 15:00:00', '2023-08-12 15:00:00', '2023-08-12 18:00:00', 1, 'instance-000ffcfa', 'ACTIVE', 'John Doe', 'Production', 'Feature1,Feature2');
+    ('d6c4f518-28c1-43a2-8d24-8cb66b335320', 'ecs-test02', 8, 8192, 100, '192.168.0.117', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd12', 'ACTIVE', 'Jane Smith', 'Development', 'Feature2,Feature3');
+    ('d6c4f518-28c1-43a2-8d24-8cb66b335322', 'ecs-test03', 8, 8192, 100, '192.168.0.117', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd12', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3');
+    ('d6c4f518-28c1-43a2-8d24-8cb66b335323', 'ecs-test05', 8, 8192, 100, '192.168.0.112', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd13', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3');
+    ('d6c4f518-28c1-43a2-8d24-8cb66b335324', 'ecs-test06', 8, 8192, 100, '192.168.0.110', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd14', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3');
+    ('d6c4f518-28c1-43a2-8d24-8cb66b335325', 'ecs-test03', 8, 8192, 100, '192.168.0.119', '', '2023-08-12 15:30:00', '2023-08-12 15:30:00', '2023-08-12 19:00:00', 2, 'instance-00abcd15', 'DOWN', 'Jane Smith', 'Development', 'Feature2,Feature3');
 
 -- Add more test data as needed
+
+```
+
+```bash
+curl -X PUT -u username:password -H "Content-Type: application/json" -d '{ 
+    "ID": "9f819649-1231231231231231233333312312312asdasdsadasdasdasdasd1f7c-44ea-a315-12312",
+    "Name": "New Server Nam22222321312312312312322e22222213123123123123222222",
+    "VCPUs": 4,
+    "RAM": 8192,
+    "Disk": 500,
+    "IPv4Address": "192.168.0.134",
+    "IPv6Address": "2001:db8::1",
+    "CreatedAt": "2023-08-12T15:00:00Z",
+    "UpdatedAt": "2023-08-12T16:00:00Z",
+    "TerminateAt": "2023-08-12T19:00:00Z",
+    "PowerState": 1,
+    "HostName": "ITSM-0008",
+    "HostStatus": "ACTIVE",
+    "Owner": "New Owner",
+    "Environment": "Production",
+    "Features": "Feature1,Feature2"
+}' http://localhost:8080/api/servers/d6c4f518-28c1-43a2-8d24-8cb66b335325
+{"message":"Server updated successfully"}
 
 ```

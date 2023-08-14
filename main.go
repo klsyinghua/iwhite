@@ -1,45 +1,58 @@
 package main
 
 import (
+	"fmt"
+	"iwhite/config"
+	"iwhite/scheduler"
 	"log"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"iwhite/config"
 	"iwhite/db"
-	"iwhite/models"
 	"iwhite/routes"
-	"iwhite/scheduler"
 )
 
 func main() {
 	// Initialize configuration
-	configPath := "config.yaml"
-	if err := config.LoadConfig(configPath); err != nil {
-		log.Fatalf("Failed to load config file: %v", err)
+	var appConfig config.AppConfig
+	var dbInstance db.Database
+	var configPath string
+
+	if len(os.Args) > 1 {
+		configPath = os.Args[1] // 获取命令行参数作为配置文件路径
+	}
+	if err := appConfig.InitConfig(configPath); err != nil {
+		fmt.Printf("Failed to load config file: %v\n", err)
+		return
 	}
 
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "dev"
+	}
+
+	connectionString := appConfig.GetConnectionString(env)
 	e := echo.New()
-	db.InitializeDatabase(e.Logger)
-	if db.GetDB() == nil {
-		log.Fatal("Failed to initialize database connection")
-	} else {
-		log.Println("Database connection successful")
-	}
-
-	database := db.GetDB()
-	err := database.AutoMigrate(&models.Server{})
-	if err != nil {
-		log.Fatalf("Failed to auto migrate: %v", err)
-	}
-
+	dbInstance.Initialize(connectionString, e.Logger)
+	database := dbInstance.GetConnection()
+	authUsername := "username"
+	authPassword := "password"
+	authMiddleware := middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		if username == authUsername && password == authPassword {
+			return true, nil
+		}
+		return false, nil
+	})
 	// 添加日志中间件
 	e.Use(middleware.Logger())
+	e.Use(authMiddleware)
 
 	// 设置路由
 	routes.SetupRoutes(e, database)
 	// 启动定时更新指标的调度器
-	scheduler.StartScheduler(database)
+	schedulerInstance := scheduler.NewScheduler(database)
+	schedulerInstance.Start()
 	log.Fatal(e.Start(":8080"))
 }
